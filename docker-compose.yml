@@ -13,6 +13,12 @@ services:
       # این دو مقدار روی .env اولویت دارند و نباید عوض شوند
       - NODE_ENV=production
       - DATABASE_URL=file:/app/data/nashryar.db
+      # اول IPv4 — بدون این، اگر دامنه سایت مقصد رکورد IPv6 داشته باشد و سرور
+      # مسیر IPv6 نداشته باشد، انتشار با خطای EHOSTUNREACH شکست می‌خورد
+      - NODE_OPTIONS=--dns-result-order=ipv4first
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     volumes:
       # دیتابیس و تصاویر بیرون کانتینر می‌مانند تا با هر بیلد از بین نروند
       - ./data:/app/data
