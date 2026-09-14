@@ -407,6 +407,85 @@ console.log('۱۲) تنظیمات وبلاگ سایت');
   check('منوی بیش از ۱۰ لینک رد می‌شود', badMenu.status === 400);
 }
 
+console.log('۱۲.۵) تنظیمات سئوی سطح سایت');
+{
+  const cfg = {
+    blogTitle: 'مجله ارزینو',
+    blogDescription: 'آموزش و تحلیل بازار ارز دیجیتال',
+    postsPerPage: 9,
+    menu: [{ label: 'صفحه اصلی', url: '/' }],
+    categoriesOrder: ['آموزش'],
+    showAuthor: true,
+    showDate: true,
+    showViews: false,
+    titleTemplate: '%s | مجله ارزینو',
+    defaultOgImage: 'https://arzinoo.com/og-default.jpg',
+    organizationName: 'ارزینو',
+    organizationLogo: 'https://arzinoo.com/logo.png',
+    twitterHandle: '@arzinoo',
+    googleVerification: 'abc123verification',
+    blogNoindex: false,
+    sitemapEnabled: true,
+    structuredData: true,
+  };
+  const save = await api(`/api/admin/sites/${siteId}/blog-config`, 'PUT', cfg);
+  check('ذخیره تنظیمات سئوی سایت', save.status === 200, JSON.stringify(save.json));
+
+  const stored = await api(`/api/admin/sites/${siteId}/blog-config`);
+  check('قالب عنوان ذخیره شد', stored.json?.config?.titleTemplate === '%s | مجله ارزینو');
+  check('کد تأیید گوگل ذخیره شد', stored.json?.config?.googleVerification === 'abc123verification');
+  check(
+    'کلیدهای بولی سئو ذخیره شدند',
+    stored.json?.config?.sitemapEnabled === true && stored.json?.config?.structuredData === true
+  );
+
+  const push = await fetch(`${BASE}/api/admin/sites/${siteId}/blog-config`, {
+    method: 'POST',
+    headers: { Cookie: cookie },
+  });
+  check('اعمال تنظیمات سئو روی سایت', push.status === 200);
+
+  const readBack = await fetch(`${BASE}/api/admin/sites/${siteId}/blog-config?read=1`, {
+    method: 'POST',
+    headers: { Cookie: cookie },
+  });
+  const rb = await readBack.json();
+  check(
+    'سئو روی سایت نشست',
+    rb.config?.titleTemplate === '%s | مجله ارزینو' && rb.config?.twitterHandle === '@arzinoo',
+    JSON.stringify(rb.config)
+  );
+
+  const badOg = await api(`/api/admin/sites/${siteId}/blog-config`, 'PUT', {
+    ...cfg,
+    defaultOgImage: 'x'.repeat(600),
+  });
+  check('آدرس تصویر بیش از حد بلند رد می‌شود', badOg.status === 400);
+}
+
+console.log('۱۲.۶) گزارش فنی سئوی سایت');
+{
+  const before = await api(`/api/admin/sites/${siteId}/seo-report`);
+  check('خواندن گزارش (حتی خالی)', before.status === 200);
+
+  const run = await fetch(`${BASE}/api/admin/sites/${siteId}/seo-report`, {
+    method: 'POST',
+    headers: { Cookie: cookie },
+  });
+  const runJson = await run.json();
+  check('اجرای بررسی سئو', run.status === 200 && runJson.ok === true, JSON.stringify(runJson).slice(0, 140));
+  check('امتیاز عددی دارد', typeof runJson.report?.score === 'number');
+  check('فهرست بررسی‌ها پر است', Array.isArray(runJson.report?.checks) && runJson.report.checks.length >= 3);
+  check(
+    'هر بررسی وضعیت معتبر دارد',
+    runJson.report.checks.every((c) => ['pass', 'warn', 'fail'].includes(c.status))
+  );
+  check('اطلاعات واقعی سایت ثبت شد', typeof runJson.report?.facts?.blogUrl === 'string');
+
+  const after = await api(`/api/admin/sites/${siteId}/seo-report`);
+  check('گزارش ذخیره و بازخوانی شد', after.json?.report?.score === runJson.report.score && !!after.json?.checkedAt);
+}
+
 console.log('۱۳) آمار کلی سایت‌ها');
 {
   const create = await api('/api/admin/articles', 'POST', {

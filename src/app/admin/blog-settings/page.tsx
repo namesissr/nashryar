@@ -15,8 +15,10 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
+  Search,
 } from 'lucide-react';
 import { Card, Button, Input, Textarea, Spinner } from '@/components/ui';
+import { SiteSeoReport } from '@/components/site-seo-report';
 import { fetcher, apiCall } from '@/lib/fetcher';
 import { faNum, cn } from '@/lib/utils';
 
@@ -31,6 +33,16 @@ type BlogConfig = {
   showAuthor?: boolean;
   showDate?: boolean;
   showViews?: boolean;
+  // سئوی سطح سایت
+  titleTemplate?: string | null;
+  defaultOgImage?: string | null;
+  organizationName?: string | null;
+  organizationLogo?: string | null;
+  twitterHandle?: string | null;
+  googleVerification?: string | null;
+  blogNoindex?: boolean;
+  sitemapEnabled?: boolean;
+  structuredData?: boolean;
 };
 
 type ConfigResponse = {
@@ -91,6 +103,16 @@ function SiteBlogConfig({ siteId }: { siteId: string }) {
   const [showAuthor, setShowAuthor] = useState(true);
   const [showDate, setShowDate] = useState(true);
   const [showViews, setShowViews] = useState(true);
+  // سئوی سطح سایت
+  const [titleTemplate, setTitleTemplate] = useState('');
+  const [defaultOgImage, setDefaultOgImage] = useState('');
+  const [organizationName, setOrganizationName] = useState('');
+  const [organizationLogo, setOrganizationLogo] = useState('');
+  const [twitterHandle, setTwitterHandle] = useState('');
+  const [googleVerification, setGoogleVerification] = useState('');
+  const [blogNoindex, setBlogNoindex] = useState(false);
+  const [sitemapEnabled, setSitemapEnabled] = useState(true);
+  const [structuredData, setStructuredData] = useState(true);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pushing, setPushing] = useState(false);
@@ -108,6 +130,15 @@ function SiteBlogConfig({ siteId }: { siteId: string }) {
     setShowAuthor(c.showAuthor ?? true);
     setShowDate(c.showDate ?? true);
     setShowViews(c.showViews ?? true);
+    setTitleTemplate(c.titleTemplate || '');
+    setDefaultOgImage(c.defaultOgImage || '');
+    setOrganizationName(c.organizationName || '');
+    setOrganizationLogo(c.organizationLogo || '');
+    setTwitterHandle(c.twitterHandle || '');
+    setGoogleVerification(c.googleVerification || '');
+    setBlogNoindex(c.blogNoindex ?? false);
+    setSitemapEnabled(c.sitemapEnabled ?? true);
+    setStructuredData(c.structuredData ?? true);
   }
 
   useEffect(() => {
@@ -127,6 +158,15 @@ function SiteBlogConfig({ siteId }: { siteId: string }) {
       showAuthor,
       showDate,
       showViews,
+      titleTemplate: titleTemplate || null,
+      defaultOgImage: defaultOgImage || null,
+      organizationName: organizationName || null,
+      organizationLogo: organizationLogo || null,
+      twitterHandle: twitterHandle || null,
+      googleVerification: googleVerification || null,
+      blogNoindex,
+      sitemapEnabled,
+      structuredData,
     };
   }
 
@@ -248,6 +288,115 @@ function SiteBlogConfig({ siteId }: { siteId: string }) {
           </div>
         </Card>
 
+        <Card
+          title={
+            <span className="flex items-center gap-2">
+              <Search size={16} className="text-brand-500" />
+              سئوی سایت
+            </span>
+          }
+        >
+          <div className="space-y-4">
+            <Input
+              label="قالب عنوان صفحه مقاله"
+              value={titleTemplate}
+              onChange={(e) => setTitleTemplate(e.target.value)}
+              placeholder={`%s | ${data.site.name}`}
+              hint="عبارت %s جای عنوان مقاله را می‌گیرد. خالی بگذارید تا فقط عنوان مقاله نمایش داده شود."
+            />
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="min-w-56 flex-1">
+                <Input
+                  label="تصویر پیش‌فرض اشتراک‌گذاری (og:image)"
+                  dir="ltr"
+                  value={defaultOgImage}
+                  onChange={(e) => setDefaultOgImage(e.target.value)}
+                  placeholder="https://…/og-default.jpg"
+                  hint="وقتی مقاله تصویر شاخص ندارد، این تصویر ۱۲۰۰×۶۳۰ استفاده می‌شود."
+                />
+              </div>
+              {defaultOgImage && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={defaultOgImage}
+                  alt=""
+                  className="h-16 w-28 shrink-0 rounded-lg border border-slate-200 object-cover dark:border-slate-700"
+                />
+              )}
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input
+                label="نام سازمان (Schema.org)"
+                value={organizationName}
+                onChange={(e) => setOrganizationName(e.target.value)}
+                placeholder={data.site.name}
+              />
+              <Input
+                label="لوگوی سازمان"
+                dir="ltr"
+                value={organizationLogo}
+                onChange={(e) => setOrganizationLogo(e.target.value)}
+                placeholder="https://…/logo.png"
+              />
+              <Input
+                label="شناسه ایکس/توییتر"
+                dir="ltr"
+                value={twitterHandle}
+                onChange={(e) => setTwitterHandle(e.target.value)}
+                placeholder="@username"
+              />
+              <Input
+                label="کد تأیید گوگل سرچ کنسول"
+                dir="ltr"
+                value={googleVerification}
+                onChange={(e) => setGoogleVerification(e.target.value)}
+                placeholder="فقط مقدار content"
+                hint="از روش HTML tag در سرچ کنسول، فقط مقدار content را اینجا بگذارید."
+              />
+            </div>
+            <div className="space-y-2 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
+              <label className="flex cursor-pointer items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={sitemapEnabled}
+                  onChange={(e) => setSitemapEnabled(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded"
+                />
+                <span>
+                  افزودن مقاله‌ها به نقشه سایت (sitemap)
+                  <span className="block text-xs text-slate-400">به گوگل کمک می‌کند مقاله‌های تازه را زودتر پیدا کند.</span>
+                </span>
+              </label>
+              <label className="flex cursor-pointer items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={structuredData}
+                  onChange={(e) => setStructuredData(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded"
+                />
+                <span>
+                  داده ساختاریافته مقاله (Schema.org Article)
+                  <span className="block text-xs text-slate-400">شانس نمایش در نتایج غنی گوگل را بالا می‌برد.</span>
+                </span>
+              </label>
+              <label className="flex cursor-pointer items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={blogNoindex}
+                  onChange={(e) => setBlogNoindex(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded"
+                />
+                <span className={blogNoindex ? 'font-bold text-rose-600 dark:text-rose-400' : ''}>
+                  کل وبلاگ از موتورهای جستجو پنهان شود (noindex)
+                  <span className="block text-xs font-normal text-slate-400">
+                    فقط برای وبلاگ در حال آماده‌سازی؛ با روشن بودنش هیچ مقاله‌ای در گوگل دیده نمی‌شود.
+                  </span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </Card>
+
         <Card title="منوی وبلاگ (لینک‌های بالای صفحه وبلاگ سایت)">
           <div className="space-y-2">
             {menu.length === 0 && (
@@ -362,6 +511,9 @@ function SiteBlogConfig({ siteId }: { siteId: string }) {
             خواندن تنظیمات فعلی سایت
           </Button>
         </div>
+
+        {/* بررسی فنی سئو روی خود سایت */}
+        <SiteSeoReport siteId={siteId} />
       </div>
     </div>
   );

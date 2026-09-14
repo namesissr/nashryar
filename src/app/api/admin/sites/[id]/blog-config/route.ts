@@ -17,6 +17,17 @@ const configSchema = z.object({
   showAuthor: z.boolean().default(true),
   showDate: z.boolean().default(true),
   showViews: z.boolean().default(true),
+
+  // ---- سئوی سطح سایت ----
+  titleTemplate: z.string().max(120).nullish(),
+  defaultOgImage: z.string().max(500).nullish(),
+  organizationName: z.string().max(120).nullish(),
+  organizationLogo: z.string().max(500).nullish(),
+  twitterHandle: z.string().max(40).nullish(),
+  googleVerification: z.string().max(200).nullish(),
+  blogNoindex: z.boolean().default(false),
+  sitemapEnabled: z.boolean().default(true),
+  structuredData: z.boolean().default(true),
 });
 
 /** تنظیمات ذخیره‌شده در هاب + دسته‌های سایت برای مرتب‌سازی */

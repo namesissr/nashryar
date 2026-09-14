@@ -38,8 +38,12 @@ model Site {
   contentKind String     @default("html") // html | markdown — سایت کدام را رندر می‌کند
   createdAt   DateTime   @default(now())
 
-  // تنظیمات وبلاگ سایت مقصد — JSON: عنوان، توضیحات، منو، ترتیب دسته‌ها، نمایش
+  // تنظیمات وبلاگ سایت مقصد — JSON: عنوان، توضیحات، منو، ترتیب دسته‌ها، نمایش، سئو
   blogConfig String @default("{}")
+
+  // آخرین گزارش بررسی فنی سئو روی خود سایت (JSON) و زمان اجرای آن
+  lastSeoReport   String    @default("{}")
+  lastSeoReportAt DateTime?
 
   // برنامه انتشار خودکار (صف)
   autoPublishEnabled Boolean @default(false)
