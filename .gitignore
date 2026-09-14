@@ -1,8 +1,14 @@
 node_modules/
 .next/
 *.tsbuildinfo
+
+# تنظیمات محرمانه — فقط .env.example داخل گیت می‌رود
 .env
+
+# دیتابیس و داده‌های زنده
 prisma/*.db
 prisma/*.db-journal
+data/
+uploads/
 public/uploads/*
 !public/uploads/.gitkeep
