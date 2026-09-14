@@ -83,6 +83,19 @@ async function hubFetch(site: { apiUrl: string; hubSecret: string }, path: strin
   return { res, body };
 }
 
+/** علت واقعی خطای شبکه را از undici بیرون می‌کشد (ENOTFOUND، ETIMEDOUT، خطای گواهی و…) */
+export function describeNetError(err: unknown): string {
+  if (err instanceof Error) {
+    if (err.name === 'TimeoutError' || err.name === 'AbortError') {
+      return 'مهلت اتصال به سایت مقصد تمام شد (Timeout)';
+    }
+    const cause = (err as { cause?: { code?: string; message?: string } }).cause;
+    const detail = cause?.code || cause?.message || err.message || 'خطای ناشناخته';
+    return `اتصال به سایت مقصد برقرار نشد (${detail})`;
+  }
+  return 'اتصال به سایت مقصد برقرار نشد';
+}
+
 /** خطای قابل نمایش از پاسخ سایت مقصد می‌سازد */
 function errorMessage(status: number, body: unknown): string {
   const b = body as { error?: { message?: string } | string; detail?: string; message?: string } | null;
@@ -146,7 +159,7 @@ export async function publishArticle(articleId: string, opts: { unpublish?: bool
     });
     return { ok: true as const, remoteSlug };
   } catch (err) {
-    const msg = err instanceof Error && err.name === 'TimeoutError' ? 'مهلت اتصال به سایت مقصد تمام شد' : `اتصال به سایت مقصد برقرار نشد (${err instanceof Error ? err.message : 'خطای ناشناخته'})`;
+    const msg = describeNetError(err);
     await prisma.article.update({ where: { id: articleId }, data: { syncError: msg } });
     await prisma.articleEvent.create({ data: { articleId, kind: 'error', detail: msg } });
     return { ok: false as const, error: msg };
@@ -168,8 +181,8 @@ export async function deleteRemote(articleId: string) {
       return { ok: false as const, error: errorMessage(res.status, body) };
     }
     return { ok: true as const };
-  } catch {
-    return { ok: false as const, error: 'اتصال به سایت مقصد برقرار نشد' };
+  } catch (err) {
+    return { ok: false as const, error: describeNetError(err) };
   }
 }
 
@@ -227,13 +240,7 @@ export async function pushBlogConfig(siteId: string) {
     if (!res.ok) return { ok: false as const, error: errorMessage(res.status, body) };
     return { ok: true as const };
   } catch (err) {
-    return {
-      ok: false as const,
-      error:
-        err instanceof Error && err.name === 'TimeoutError'
-          ? 'مهلت اتصال به سایت مقصد تمام شد'
-          : 'اتصال به سایت مقصد برقرار نشد',
-    };
+    return { ok: false as const, error: describeNetError(err) };
   }
 }
 
@@ -246,8 +253,8 @@ export async function fetchRemoteBlogConfig(siteId: string) {
     if (!res.ok) return { ok: false as const, error: errorMessage(res.status, body) };
     const parsed = body as { config?: unknown; data?: { config?: unknown } };
     return { ok: true as const, config: parsed?.config ?? parsed?.data?.config ?? {} };
-  } catch {
-    return { ok: false as const, error: 'اتصال به سایت مقصد برقرار نشد' };
+  } catch (err) {
+    return { ok: false as const, error: describeNetError(err) };
   }
 }
 
@@ -266,9 +273,6 @@ export async function testSiteConnection(siteId: string) {
     if (res.status === 503) return { ok: false as const, error: 'HUB_SECRET روی سایت مقصد تنظیم نشده است (503)' };
     return { ok: false as const, error: errorMessage(res.status, body) };
   } catch (err) {
-    return {
-      ok: false as const,
-      error: err instanceof Error && err.name === 'TimeoutError' ? 'مهلت اتصال تمام شد' : 'اتصال برقرار نشد — آدرس API را بررسی کنید',
-    };
+    return { ok: false as const, error: describeNetError(err) };
   }
 }
