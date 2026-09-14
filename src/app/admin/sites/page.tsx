@@ -78,11 +78,20 @@ function SiteCard({ site, onChanged }: { site: SiteRow; onChanged: () => void })
     setTesting(true);
     setMsg(null);
     try {
+      // اول مقادیر فرم ذخیره می‌شوند تا آزمایش با همان چیزی باشد که کاربر می‌بیند
+      await apiCall(`/api/admin/sites/${site.id}`, 'PUT', {
+        baseUrl,
+        apiUrl,
+        contentKind,
+        ...(secret ? { hubSecret: secret } : {}),
+      });
+      if (secret) setSecret('');
+      onChanged();
       const res = await fetch(`/api/admin/sites/${site.id}/test`, { method: 'POST' });
       const json = await res.json();
       setMsg(json.ok ? { ok: true, text: json.message } : { ok: false, text: json.error });
-    } catch {
-      setMsg({ ok: false, text: 'خطا در آزمایش اتصال' });
+    } catch (err) {
+      setMsg({ ok: false, text: err instanceof Error ? err.message : 'خطا در آزمایش اتصال' });
     } finally {
       setTesting(false);
     }
