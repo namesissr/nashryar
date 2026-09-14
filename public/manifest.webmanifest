@@ -1,0 +1,19 @@
+{
+  "name": "نشریار — هاب مرکزی محتوا",
+  "short_name": "نشریار",
+  "description": "پنل مرکزی نگارش، سئو و انتشار مقاله",
+  "start_url": "/admin",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "fa",
+  "background_color": "#0f172a",
+  "theme_color": "#1b6ef5",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

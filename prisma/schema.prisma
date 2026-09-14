@@ -1,0 +1,163 @@
+// نشریار — مدل دیتابیس هاب مرکزی محتوا
+// SQLite تا بدون هیچ پیش‌نیازی اجرا شود؛ برای مقیاس بزرگ‌تر کافی است provider عوض شود.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// نویسنده‌ها و مدیر پنل
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         String    @default("WRITER") // ADMIN | WRITER
+  createdAt    DateTime  @default(now())
+  articles     Article[]
+}
+
+/// سایت‌های مقصد انتشار (ارزینو، چارتینو، فیلمینو، بلوپال)
+model Site {
+  id          String     @id @default(cuid())
+  key         String     @unique // شناسه کوتاه لاتین: arzinoo, chartinoo, ...
+  name        String // نام فارسی برای نمایش
+  tagline     String? // توضیح کوتاه
+  baseUrl     String // آدرس عمومی سایت مثل https://arzinoo.com
+  apiUrl      String // آدرس پایه API برای انتشار (درگاه دریافت هاب)
+  hubSecret   String // کلید محرمانه X-Hub-Secret همان سایت
+  color       String     @default("#3b82f6") // رنگ برند برای پنل
+  enabled     Boolean    @default(true)
+  sortOrder   Int        @default(0)
+  contentKind String     @default("html") // html | markdown — سایت کدام را رندر می‌کند
+  createdAt   DateTime   @default(now())
+
+  // تنظیمات وبلاگ سایت مقصد — JSON: عنوان، توضیحات، منو، ترتیب دسته‌ها، نمایش
+  blogConfig String @default("{}")
+
+  // برنامه انتشار خودکار (صف)
+  autoPublishEnabled Boolean @default(false)
+  autoPerDay         Int     @default(1) // چند مقاله در روز
+  autoWindowStart    String  @default("09:00") // شروع بازه انتشار
+  autoWindowEnd      String  @default("21:00") // پایان بازه انتشار
+  autoDays           String  @default("0,1,2,3,4,5,6") // روزهای مجاز هفته (اعداد getDay جاوااسکریپت)
+  autoMode           String  @default("spread") // spread = پخش یکنواخت در بازه | times = ساعت‌های ثابت
+  autoTimes          String  @default("") // برای حالت times: «09:00,13:00,18:00»
+  articles    Article[]
+  categories  Category[]
+}
+
+/// دسته‌بندی مخصوص هر سایت
+model Category {
+  id       String    @id @default(cuid())
+  siteId   String
+  name     String
+  slug     String
+  site     Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  articles Article[]
+
+  @@unique([siteId, slug])
+  @@unique([siteId, name])
+}
+
+/// برچسب سراسری
+model Tag {
+  id       String       @id @default(cuid())
+  name     String       @unique
+  articles ArticleTag[]
+}
+
+model ArticleTag {
+  articleId String
+  tagId     String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+}
+
+/// مقاله — نسخه مرجع همه محتواها اینجاست
+model Article {
+  id         String    @id @default(cuid())
+  siteId     String
+  authorId   String?
+  categoryId String?
+
+  title     String
+  slug      String
+  excerpt   String?
+  contentMd String  @default("") // متن اصلی به مارک‌داون
+  coverUrl  String?
+  coverAlt  String?
+
+  // سئو
+  focusKeyword    String?
+  seoTitle        String?
+  seoDescription  String?
+  canonicalUrl    String?
+  noindex         Boolean @default(false)
+  seoScore        Int     @default(0)
+  wordCount       Int     @default(0)
+  readingMinutes  Int     @default(1)
+
+  // چرخه انتشار
+  status        String    @default("DRAFT") // DRAFT | QUEUED | SCHEDULED | PUBLISHED | ARCHIVED
+  publishedAt   DateTime? // تاریخ انتشار (برای SCHEDULED: زمان انتشار آینده)
+  queuePosition Int? // جایگاه در صف انتشار خودکار سایت
+  autoPublished Boolean   @default(false) // آیا زمان‌بند خودکار منتشرش کرده
+  syncedAt    DateTime? // آخرین باری که با موفقیت روی سایت مقصد نشست
+  syncError   String? // آخرین خطای انتشار
+  remoteSlug  String? // اسلاگ نهایی که سایت مقصد برگرداند
+  remoteViews Int       @default(0) // بازدید واقعی روی سایت مقصد
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  site     Site         @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  author   User?        @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  category Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags     ArticleTag[]
+  views    DailyView[]
+  events   ArticleEvent[]
+
+  @@unique([siteId, slug])
+  @@index([siteId, status])
+}
+
+/// آمار بازدید روزانه هر مقاله (از سایت مقصد همگام می‌شود)
+model DailyView {
+  id        String  @id @default(cuid())
+  articleId String
+  date      String // YYYY-MM-DD
+  count     Int     @default(0)
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, date])
+}
+
+/// رویدادهای مهم مقاله برای گزارش (انتشار، به‌روزرسانی، خطا)
+model ArticleEvent {
+  id        String   @id @default(cuid())
+  articleId String
+  kind      String // published | updated | unpublished | error | stats-sync
+  detail    String?
+  createdAt DateTime @default(now())
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([articleId, createdAt])
+}
+
+/// فایل‌های رسانه آپلودشده
+model Media {
+  id        String   @id @default(cuid())
+  fileName  String
+  url       String
+  mime      String
+  size      Int
+  alt       String?
+  createdAt DateTime @default(now())
+}

@@ -1,0 +1,86 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+  --color-brand-50: #eef7ff;
+  --color-brand-100: #d9edff;
+  --color-brand-200: #bce0ff;
+  --color-brand-300: #8ecdff;
+  --color-brand-400: #59b0ff;
+  --color-brand-500: #338fff;
+  --color-brand-600: #1b6ef5;
+  --color-brand-700: #1458e1;
+  --color-brand-800: #1747b6;
+  --color-brand-900: #193f8f;
+  --color-brand-950: #142857;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/fonts/Vazirmatn.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+  font-family: var(--font-sans);
+}
+
+/* استایل متن مقاله در پیش‌نمایش */
+.prose-fa {
+  @apply leading-8 text-slate-800 dark:text-slate-200;
+}
+.prose-fa h1 { @apply mt-8 mb-4 text-2xl font-extrabold; }
+.prose-fa h2 { @apply mt-8 mb-3 text-xl font-bold border-r-4 border-brand-500 pr-3; }
+.prose-fa h3 { @apply mt-6 mb-2 text-lg font-bold; }
+.prose-fa h4 { @apply mt-4 mb-2 font-bold; }
+.prose-fa p { @apply my-3; }
+.prose-fa ul { @apply my-3 pr-6 list-disc; }
+.prose-fa ol { @apply my-3 pr-6 list-decimal; }
+.prose-fa li { @apply my-1; }
+.prose-fa a { @apply text-brand-600 dark:text-brand-400 underline underline-offset-4; }
+.prose-fa img { @apply my-4 rounded-xl max-w-full; }
+.prose-fa blockquote { @apply my-4 border-r-4 border-slate-300 dark:border-slate-700 pr-4 text-slate-600 dark:text-slate-400; }
+.prose-fa pre { @apply my-4 rounded-xl bg-slate-900 text-slate-100 p-4 overflow-x-auto text-sm leading-6; direction: ltr; text-align: left; }
+.prose-fa code { @apply rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[0.9em]; direction: ltr; unicode-bidi: embed; }
+.prose-fa pre code { @apply bg-transparent p-0; }
+.prose-fa table { @apply my-4 w-full border-collapse text-sm; }
+.prose-fa th, .prose-fa td { @apply border border-slate-200 dark:border-slate-700 px-3 py-2; }
+.prose-fa th { @apply bg-slate-100 dark:bg-slate-800 font-bold; }
+.prose-fa hr { @apply my-6 border-slate-200 dark:border-slate-800; }
+
+/* اسکرول‌بار ظریف */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 0.5) transparent;
+}
+
+/* موبایل: فونت ۱۶ پیکسلی ورودی‌ها تا سافاری هنگام تایپ زوم نکند + حذف هایلایت لمس */
+@media (max-width: 1023px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* رعایت ناچ گوشی‌ها */
+@supports (padding: env(safe-area-inset-left)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
