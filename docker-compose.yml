@@ -1,0 +1,19 @@
+# نشریار — استقرار با داکر
+# راهنمای کامل نصب از صفر: docs/نصب-از-صفر.md
+services:
+  nashryar:
+    build: .
+    container_name: nashryar
+    restart: unless-stopped
+    # فقط روی لوپ‌بک؛ دسترسی بیرونی از طریق Nginx با TLS
+    ports:
+      - '127.0.0.1:3100:3100'
+    env_file: .env
+    environment:
+      # این دو مقدار روی .env اولویت دارند و نباید عوض شوند
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/data/nashryar.db
+    volumes:
+      # دیتابیس و تصاویر بیرون کانتینر می‌مانند تا با هر بیلد از بین نروند
+      - ./data:/app/data
+      - ./uploads:/app/public/uploads
